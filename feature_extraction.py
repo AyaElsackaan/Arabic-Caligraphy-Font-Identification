@@ -229,3 +229,73 @@ def LBP(image, eps=1e-7, numPoints=10, radius=8, window=100, method="uniform"):
     # print(hist)
     print(histograms)
     return histograms
+
+
+# LVL used to separete Kufi and Square Kufi
+def LVL(gray):
+    verticalLines = []  # stores the theta and prependicular of the vertical lines
+    Vertical = 0  # number of vertical lines
+    Total = 0  # number of  lines
+    verticalLinHeights = []  # will contain the lengtn of vertical lines
+    maxY = -math.inf  # will have the max y value
+    minY = math.inf  # will have the min y value
+
+    #     #reshaping the image to 3D
+    # #     gray=gray.reshape(gray.shape[0],gray.shape[1],1)
+    # #     print(gray.shape)
+    #     show_images([gray])
+
+    # turning the black to white writing & cropping text only
+    img = pre_process(gray)
+    img = crop_image(img, tol=0)
+
+    # reshaping into 2D
+    img = img.reshape(img.shape[0], img.shape[1])
+
+    # converting to skeleton
+    skelImg = morphology.skeletonize(img, method='zhang')
+    skelImg = skelImg.astype('uint8')
+
+    # getting all lines in the image
+    lines = cv2.HoughLines(skelImg, 1, np.pi / 180, 80)
+    linesLength = cv2.HoughLinesP(skelImg, 1, np.pi / 180, 5, minLineLength=10, maxLineGap=10)
+    # print("this is the lines",lines)
+
+    # if no lines is found
+    if (lines is None):
+        return [-1, -1]
+
+    # counting the vertical lines
+    for line in lines:
+        if (abs(line[0, 1] - np.pi / 2) < 0.001):
+            Vertical += 1;
+            verticalLines.append(line)
+        Total += 1
+
+    # gething the length of vertical lines
+    #     if (linesLength is None):
+    #         return -1
+
+    for line in linesLength:
+        x1, y1, x2, y2 = line[0]
+        # geting the highest Y and lowest Y to detemine text height
+        maxY = max(y1, y2, maxY)
+        minY = min(y1, y2, minY)
+
+        # getting vertical lines length
+        if (x1 - x2 == 0):
+            verticalLinHeights.append(abs(y1 - y2))
+
+    # (a) the text height from the bottomto top
+    TextHeight = abs(maxY - minY)
+
+    # (c) the length of the highest detectedvertical line
+    maxLength = max(verticalLinHeights)
+
+    # (d) the difference ratio between the text height and the highest vertical line
+    ratio_TextHeight_MaxLine = maxLength / TextHeight
+
+    # (e) the variance among the vertical lines
+    norm_verticalLinHeights = verticalLinHeights / TextHeight
+
+    return [ratio_TextHeight_MaxLine, np.cov(norm_verticalLinHeights)]
