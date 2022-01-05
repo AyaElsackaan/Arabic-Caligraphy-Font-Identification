@@ -2,12 +2,12 @@ import numpy as np
 def pre_process(x):
     #bet7awel le binary
     color=(np.max(x)+np.min(x))/2
-    print(color)
+    #print(color)
     if x[0][0][0]>color:
-        print("nnnnnnnnnnnnn")
+        #print("nnnnnnnnnnnnn")
         return (x<color).astype(int)
     else:
-        print("heeeh")
+        #print("heeeh")
         return (x>color).astype(int)
 def crop_image(img,tol=0):
     # img is 2D image data

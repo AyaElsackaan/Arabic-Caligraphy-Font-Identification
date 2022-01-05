@@ -9,6 +9,7 @@ from pre_processing import *
 from commonfunctions import *
 from collections import Counter
 from scipy.signal import argrelextrema
+from scipy.signal import convolve2d
 
 
 
@@ -44,10 +45,10 @@ def gabor_filter(img):
 
 def get_max_theta(img):
     img = morphology.skeletonize(crop_image(pre_process(img)))
-    print(img.shape)
+    #print(img.shape)
     #show_images([img])
     lines = cv2.HoughLines(img, 1, np.pi / 180, 20)
-    print(lines[:,:,1].reshape(-1))
+    #print(lines[:,:,1].reshape(-1))
     b = Counter(lines[:,:,1].reshape(-1))
     return [a for a,b in b.most_common(20)]
 
@@ -88,7 +89,7 @@ def HVSL(gray):
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
 
     lines = cv2.HoughLines(edges, 1, np.pi / 180, 80)
-    print(lines)
+    #print(lines)
     if (lines is None):
         return -1
     HV = 0;
@@ -152,7 +153,7 @@ def get_histogram_of_gradients(img):
     gy = cv2.Sobel(img, cv2.CV_32F, 0, 1, ksize=1)
     _, angle = cv2.cartToPolar(gx, gy, angleInDegrees=True)
     hist = np.histogram(angle)[0] / (angle.shape[0] * angle.shape[1])
-    print(hist)
+    #print(hist)
     return hist / hist.max()
 
 
@@ -186,7 +187,7 @@ def get_corners(gray):
     # Threshold for an optimal value, it may vary depending on the image.
     img[dst > 0.3 * dst.max()] = 255
     # plt.imshow(img)
-    print(np.round(np.sum(dst > 0.3 * dst.max()), 5) / np.round(np.sum(dst > 0.01 * dst.max()), 5))
+    #print(np.round(np.sum(dst > 0.3 * dst.max()), 5) / np.round(np.sum(dst > 0.01 * dst.max()), 5))
     return np.round(np.sum(dst > 0.3 * dst.max()), 5) / np.round(np.sum(dst > 0.01 * dst.max()), 5)
 
 
@@ -195,7 +196,7 @@ def sift_discriptor(img):
     image8bit = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
     keypoints, descriptors = sift.detectAndCompute(image8bit, None)
     sift_image = cv2.drawKeypoints(image8bit, keypoints, img)
-    print(descriptors.shape)
+    #print(descriptors.shape)
     plt.imshow(sift_image)
     return descriptors.shape[0] / (img.shape[0] * img.shape[1])
 
@@ -227,7 +228,7 @@ def LBP(image, eps=1e-7, numPoints=10, radius=8, window=100, method="uniform"):
     # return the histogram of Local Binary Patterns
     histograms = np.array(histograms).flatten()
     # print(hist)
-    print(histograms)
+    #print(histograms)
     return histograms
 
 
@@ -299,3 +300,58 @@ def LVL(gray):
     norm_verticalLinHeights = verticalLinHeights / TextHeight
 
     return [ratio_TextHeight_MaxLine, np.cov(norm_verticalLinHeights)]
+
+
+
+def lpq(img,winSize=3,freqestim=1,mode='nh'):
+    rho=0.90
+
+    STFTalpha=1/winSize  # alpha in STFT approaches (for Gaussian derivative alpha=1)
+    sigmaS=(winSize-1)/4 # Sigma for STFT Gaussian window (applied if freqestim==2)
+    sigmaA=8/(winSize-1) # Sigma for Gaussian derivative quadrature filters (applied if freqestim==3)
+
+    convmode='valid' # Compute descriptor responses only on part that have full neigborhood. Use 'same' if all pixels are included (extrapolates np.image with zeros).
+
+    img=np.float64(img) # Convert np.image to double
+    r=(winSize-1)/2 # Get radius from window size
+    x=np.arange(-r,r+1)[np.newaxis] # Form spatial coordinates in window
+
+    if freqestim==1:  #  STFT uniform window
+        #  Basic STFT filters
+        w0=np.ones_like(x)
+        w1=np.exp(-2*np.pi*x*STFTalpha*1j)
+        w2=np.conj(w1)
+
+    ## Run filters to compute the frequency response in the four points. Store np.real and np.imaginary parts separately
+    # Run first filter
+    filterResp1=convolve2d(convolve2d(img,w0.T,convmode),w1,convmode)
+    filterResp2=convolve2d(convolve2d(img,w1.T,convmode),w0,convmode)
+    filterResp3=convolve2d(convolve2d(img,w1.T,convmode),w1,convmode)
+    filterResp4=convolve2d(convolve2d(img,w1.T,convmode),w2,convmode)
+
+    # Initilize frequency domain matrix for four frequency coordinates (np.real and np.imaginary parts for each frequency).
+    freqResp=np.dstack([filterResp1.real, filterResp1.imag,
+                        filterResp2.real, filterResp2.imag,
+                        filterResp3.real, filterResp3.imag,
+                        filterResp4.real, filterResp4.imag])
+
+    ## Perform quantization and compute LPQ codewords
+    inds = np.arange(freqResp.shape[2])[np.newaxis,np.newaxis,:]
+    LPQdesc=((freqResp>0)*(2**inds)).sum(2)
+
+    ## Switch format to uint8 if LPQ code np.image is required as output
+    if mode=='im':
+        LPQdesc=np.uint8(LPQdesc)
+
+    ## Histogram if needed
+    if mode=='nh' or mode=='h':
+        LPQdesc=np.histogram(LPQdesc.flatten(),range(256))[0]
+
+    ## Normalize histogram if needed
+    if mode=='nh':
+        LPQdesc=LPQdesc/LPQdesc.sum()
+
+    #print(LPQdesc)
+    return LPQdesc
+def hu_moments_func(test_image):
+    return cv2.HuMoments(cv2.moments(test_image)).flatten()
