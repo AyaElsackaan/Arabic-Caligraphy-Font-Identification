@@ -264,7 +264,7 @@ def LVL(gray):
 
     # if no lines is found
     if (lines is None):
-        return [-1, -1]
+        return [-1]
 
     # counting the vertical lines
     for line in lines:
@@ -299,7 +299,7 @@ def LVL(gray):
     # (e) the variance among the vertical lines
     norm_verticalLinHeights = verticalLinHeights / TextHeight
 
-    return [ratio_TextHeight_MaxLine, np.cov(norm_verticalLinHeights)]
+    return [ratio_TextHeight_MaxLine]
 
 
 
