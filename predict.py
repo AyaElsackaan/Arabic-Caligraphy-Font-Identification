@@ -1,32 +1,13 @@
 import sys
 import os
-
-from commonfunctions import *
 import joblib
-import imageio as iio
-import cv2
-from skimage import filters
-from skimage.color import rgb2gray  # only needed for incorrectly saved images
-from skimage.measure import regionprops
-from skimage import data, color, feature,morphology
-import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
-from feature_extraction import *
-from pre_processing import *
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import tensorflow as tf
 import time
-from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import cross_val_score
-from sklearn.svm import LinearSVC,SVC
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-from sklearn.neighbors import KNeighborsClassifier
-import json
 from PIL import Image
 
-model=joblib.load('LPQ_BAS_FINAL.sav') #loading the model
+from feature_extraction import *
+from pre_processing import *
+
+MODEL=joblib.load('LPQ_BAS_FINAL.sav') #loading the model
 
 INPUT_DIR = sys.argv[1]
 OUTPUT_DIR = sys.argv[2]
@@ -53,7 +34,7 @@ def predict(test_image):
 
     #perfroming the feature extraction
     lpq_image=lpq(cropped_image,winSize=11) 
-    prediction = model.predict(lpq_image.reshape(1,-1))
+    prediction = MODEL.predict(lpq_image.reshape(1,-1))
 
     end=time.time()
     execution_time = end-start

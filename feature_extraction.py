@@ -4,9 +4,9 @@ import numpy as np
 import math
 from scipy import ndimage as nd
 import cv2
-from skimage import data, color, feature,morphology
+from skimage import feature,morphology
 from pre_processing import *
-from commonfunctions import *
+# from commonfunctions import *
 from collections import Counter
 from scipy.signal import argrelextrema
 from scipy.signal import convolve2d
