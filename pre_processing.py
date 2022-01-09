@@ -1,6 +1,7 @@
 import numpy as np
 def pre_process(x):
     #bet7awel le binary
+    # print("x=",x)
     color=(np.max(x)+np.min(x))/2
     if x[0][0][0]>color:
         return (x<color).astype(int)
