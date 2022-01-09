@@ -49,6 +49,5 @@ with open(OUTPUT_DIRECTORY + "times.txt", 'rb') as times_file:
 
 TIME_MEAN = round(np.mean(times), 3)
 
-
 ## * Report:
 print(ACCUARICY*100, TIME_MEAN)
