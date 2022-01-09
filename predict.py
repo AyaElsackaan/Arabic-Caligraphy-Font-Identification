@@ -14,9 +14,11 @@ OUTPUT_DIR = sys.argv[2]
 
 def load_images_from_folder(folder):
     images = []
-    for filename in os.listdir(folder):
-
-        img = Image.open (os.path.join(folder,filename))
+    files=[int(filename.split(".")[0]) for filename in os.listdir(folder)]
+    files.sort()
+    for filename in files:
+        print ('reading ',filename)
+        img = Image.open (os.path.join(folder,str(filename)+'.png'))
         img = np.array(img.convert ("L")) #loading the test 
         if img is not None:
             images.append(img)
@@ -30,10 +32,9 @@ def predict(test_image):
 
     # preprocessing
     pre_processed_image=pre_process(test_image) 
-    cropped_image=crop_image(pre_processed_image)
 
     #perfroming the feature extraction
-    lpq_image=lpq(cropped_image,winSize=11) 
+    lpq_image=lpq(pre_processed_image,winSize=11) 
     prediction = MODEL.predict(lpq_image.reshape(1,-1))
 
     end=time.time()
