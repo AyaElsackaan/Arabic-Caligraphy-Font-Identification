@@ -40,7 +40,7 @@ def load_images_from_folder(folder):
         if img is not None:
             images.append(img)
 
-        print("opened", np.array(images).shape, os.path.join(folder,filename))
+        # print("opened", np.array(images).shape, os.path.join(folder,filename))
     return images
 
 
@@ -66,11 +66,11 @@ def main():
 
     # predict
     predictions_time=[predict(img) for img in X_test]
-    print(predictions_time)
+    # print(predictions_time)
 
     # output files
     results = open(OUTPUT_DIR+"/results.txt", "w")
-    time_file = open(OUTPUT_DIR+"/time.txt", "w")
+    time_file = open(OUTPUT_DIR+"/times.txt", "w")
 
     for i in range(len(predictions_time)-1):
         results.write(str(int(predictions_time[i][0]))+'\n') 
